@@ -3,15 +3,17 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/atotto/clipboard"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"log"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"unicode"
+
+	"github.com/atotto/clipboard"
+	"github.com/gdamore/tcell/v2"
+	"github.com/go-vgo/robotgo"
+	"github.com/rivo/tview"
 )
 
 type itemType struct {
@@ -71,13 +73,17 @@ func (pageVoc *pageVocType) build() {
 		SetBorderColor(tcell.ColorBlue)
 
 	pageVoc.Flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Rune() == 'o' && event.Modifiers() == tcell.ModAlt {
+		if event.Rune() == '`' && event.Modifiers() == tcell.ModAlt {
 			err := OpenLinkInBrowser(pageVoc.vLink.GetText(true))
 			if err != nil {
 			}
 		}
-		if event.Rune() == 'c' && event.Modifiers() == tcell.ModAlt {
+		if event.Rune() == '1' && event.Modifiers() == tcell.ModAlt {
 			err := clipboard.WriteAll(pageVoc.vLink.GetText(true))
+			check(err)
+		}
+		if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
+			err := robotgo.KeyTap("Enter")
 			check(err)
 		}
 		return event
