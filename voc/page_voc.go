@@ -30,14 +30,13 @@ type pageVocType struct {
 	mPosTrans        map[int]string
 	mPosItems        map[int]itemType
 	vocItems         []vocItem
-	showTranslations bool
 	*tview.Flex
 }
 
 type vocItem struct {
-	primaryText   string
-	secondaryText string
-	shortcut      rune
+	primaryText string
+	comment     string
+	shortcut    rune
 }
 
 var pageVoc pageVocType
@@ -47,7 +46,6 @@ func (pageVoc *pageVocType) build() {
 	pageVoc.mPosTrans = make(map[int]string)
 	pageVoc.mPosItems = make(map[int]itemType)
 	pageVoc.vocItems = make([]vocItem, 0)
-	pageVoc.showTranslations = true // Start with translations shown
 
 	pageVoc.lVoc = tview.NewList()
 	pageVoc.lVoc.SetBorderPadding(2, 2, 2, 2).
@@ -105,6 +103,9 @@ func (pageVoc *pageVocType) build() {
 	})
 
 	pageMain.Pages.AddPage("voc", pageVoc.Flex, true, true)
+	
+	// Initialize the list with current comment display state
+	pageVoc.refreshVocList(showComments)
 }
 
 func (pageVoc *pageVocType) show() {
@@ -112,6 +113,7 @@ func (pageVoc *pageVocType) show() {
 	pageVoc.lVoc.Clear()
 	pageVoc.vocItems = make([]vocItem, 0) // Clear existing items
 	setVoc()
+	pageVoc.refreshVocList(showComments) // Apply current comment display state
 	app.SetFocus(pageMain.Pages)
 }
 
@@ -142,7 +144,6 @@ func setVoc() {
 	words, err := zoteroDB.Query(query)
 	check(err)
 
-	var trans string
 	posNum := 0
 	var lastFirstLetter rune = 0
 
@@ -152,14 +153,6 @@ func setVoc() {
 	for words.Next() {
 		err := words.Scan(&id, &itemKey, &attachKey, &pageNum, &text, &comment)
 		check(err)
-
-		arr := strings.Split(comment.String, "\n")
-
-		if len(arr) > 0 {
-			trans = arr[0]
-		} else {
-			trans = ""
-		}
 
 		var currentFirstLetter rune = 0
 		if len(strings.ToLower(text.String)) > 0 {
@@ -172,16 +165,15 @@ func setVoc() {
 			lastFirstLetter = currentFirstLetter
 		}
 
-		pageVoc.lVoc.AddItem(strings.ToLower(text.String), trans, displayRune, func() {})
-		pageVoc.mPosTrans[posNum] = comment.String
-		pageVoc.mPosItems[posNum] = itemType{itemKey: itemKey.String, pageNum: int(pageNum.Int64), attachKey: attachKey.String}
-
-		// Store voc item for translation toggle functionality
+		// Store voc item for comment toggle functionality
 		pageVoc.vocItems = append(pageVoc.vocItems, vocItem{
-			primaryText:   strings.ToLower(text.String),
-			secondaryText: trans,
-			shortcut:      displayRune,
+			primaryText: strings.ToLower(text.String),
+			comment:     comment.String,
+			shortcut:    displayRune,
 		})
+
+		pageVoc.mPosItems[posNum] = itemType{itemKey: itemKey.String, pageNum: int(pageNum.Int64), attachKey: attachKey.String}
+		pageVoc.mPosTrans[posNum] = comment.String
 
 		posNum++
 	}
@@ -209,25 +201,25 @@ func OpenLinkInBrowser(url string) error {
 
 // toggleTranslations hides/shows all translations
 func (pageVoc *pageVocType) toggleTranslations() {
-	// Toggle the state
-	pageVoc.showTranslations = !pageVoc.showTranslations
+	// Toggle the global state
+	showComments = !showComments
 
-	// Refresh the list with new translation state
-	pageVoc.refreshVocList(pageVoc.showTranslations)
+	// Refresh the list with new state
+	pageVoc.refreshVocList(showComments)
 }
 
-// refreshVocList rebuilds the vocabulary list with current translation state
-func (pageVoc *pageVocType) refreshVocList(showTranslations bool) {
+// refreshVocList rebuilds the vocabulary list with current comment display state
+func (pageVoc *pageVocType) refreshVocList(showComments bool) {
 	pageVoc.lVoc.Clear()
 
 	for i, voc := range pageVoc.vocItems {
 		secondaryText := ""
-		if showTranslations {
-			secondaryText = voc.secondaryText
+		if showComments {
+			secondaryText = voc.comment
 		}
 
 		pageVoc.lVoc.AddItem(voc.primaryText, secondaryText, voc.shortcut, func() {})
-		pageVoc.mPosTrans[i] = voc.secondaryText
+		pageVoc.mPosTrans[i] = voc.comment
 		// mPosItems remains the same
 	}
 }
