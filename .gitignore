@@ -8,5 +8,5 @@ src/*.exe*
 *.log
 todo
 __pycache__
-*.sqlite
+*.sqlite*
 *.db

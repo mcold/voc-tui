@@ -23,13 +23,21 @@ type itemType struct {
 }
 
 type pageVocType struct {
-	lVoc      *tview.List
-	vTrans    *tview.TextView
-	vLink     *tview.TextView
-	fTrans    *tview.Flex
-	mPosTrans map[int]string
-	mPosItems map[int]itemType
+	lVoc             *tview.List
+	vTrans           *tview.TextView
+	vLink            *tview.TextView
+	fTrans           *tview.Flex
+	mPosTrans        map[int]string
+	mPosItems        map[int]itemType
+	vocItems         []vocItem
+	showTranslations bool
 	*tview.Flex
+}
+
+type vocItem struct {
+	primaryText   string
+	secondaryText string
+	shortcut      rune
 }
 
 var pageVoc pageVocType
@@ -38,6 +46,8 @@ func (pageVoc *pageVocType) build() {
 
 	pageVoc.mPosTrans = make(map[int]string)
 	pageVoc.mPosItems = make(map[int]itemType)
+	pageVoc.vocItems = make([]vocItem, 0)
+	pageVoc.showTranslations = true // Start with translations shown
 
 	pageVoc.lVoc = tview.NewList()
 	pageVoc.lVoc.SetBorderPadding(2, 2, 2, 2).
@@ -82,10 +92,14 @@ func (pageVoc *pageVocType) build() {
 			err := clipboard.WriteAll(pageVoc.vLink.GetText(true))
 			check(err)
 		}
+		if event.Rune() == 'h' && event.Modifiers() == tcell.ModAlt {
+			pageVoc.toggleTranslations()
+		}
 		if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
 			err := robotgo.KeyTap("Enter")
 			check(err)
 		}
+
 		return event
 
 	})
@@ -96,29 +110,32 @@ func (pageVoc *pageVocType) build() {
 func (pageVoc *pageVocType) show() {
 	pageMain.Pages.SwitchToPage("voc")
 	pageVoc.lVoc.Clear()
+	pageVoc.vocItems = make([]vocItem, 0) // Clear existing items
 	setVoc()
 	app.SetFocus(pageMain.Pages)
 }
 
 func setVoc() {
+	// Clear existing voc items
+	pageVoc.vocItems = make([]vocItem, 0)
 
 	query := `select iian.itemID as annID
-					, iian.KEY as annItemKEY
-					, ipar."key" as attachKey
-					, json_extract(ian.position, '$.pageIndex')+1 pageNum
-					, ian."text" as text
-					, ian.comment as trans
-			  from items i
-			  join itemData idat on idat.itemID = i.itemID and idat.fieldID = 7
-			  join itemDataValues ival on ival.valueID = idat.valueID
-			  join itemAttachments ia on ia.parentItemID = i.itemID
-			  join itemAnnotations ian on ian.parentItemID = ia.itemID
-			  join items iian on iian.itemID = ian.itemID
-			  join items ipar on ipar.itemID = ian.parentItemID
-			  where ival.value is not null
-			    and ian.type = 5
-				and ival.value = '` + os.Args[1] + `'
-			  order by lower(ian."text")`
+				, iian.KEY as annItemKEY
+				, ipar."key" as attachKey
+				, json_extract(ian.position, '$.pageIndex')+1 pageNum
+				, ian."text" as text
+				, ian.comment as trans
+		  from items i
+		  join itemData idat on idat.itemID = i.itemID and idat.fieldID = 7
+		  join itemDataValues ival on ival.valueID = idat.valueID
+		  join itemAttachments ia on ia.parentItemID = i.itemID
+		  join itemAnnotations ian on ian.parentItemID = ia.itemID
+		  join items iian on iian.itemID = ian.itemID
+		  join items ipar on ipar.itemID = ian.parentItemID
+		  where ival.value is not null
+		    and ian.type = 5
+			and ival.value = '` + os.Args[1] + `'
+		  order by lower(ian."text")`
 
 	log.Println(query)
 
@@ -158,6 +175,13 @@ func setVoc() {
 		pageVoc.lVoc.AddItem(strings.ToLower(text.String), trans, displayRune, func() {})
 		pageVoc.mPosTrans[posNum] = comment.String
 		pageVoc.mPosItems[posNum] = itemType{itemKey: itemKey.String, pageNum: int(pageNum.Int64), attachKey: attachKey.String}
+		
+		// Store voc item for translation toggle functionality
+		pageVoc.vocItems = append(pageVoc.vocItems, vocItem{
+			primaryText:   strings.ToLower(text.String),
+			secondaryText: trans,
+			shortcut:      displayRune,
+		})
 
 		posNum++
 	}
@@ -181,4 +205,29 @@ func OpenLinkInBrowser(url string) error {
 	}
 
 	return cmd.Run()
+}
+
+// toggleTranslations hides/shows all translations
+func (pageVoc *pageVocType) toggleTranslations() {
+	// Toggle the state
+	pageVoc.showTranslations = !pageVoc.showTranslations
+	
+	// Refresh the list with new translation state
+	pageVoc.refreshVocList(pageVoc.showTranslations)
+}
+
+// refreshVocList rebuilds the vocabulary list with current translation state
+func (pageVoc *pageVocType) refreshVocList(showTranslations bool) {
+	pageVoc.lVoc.Clear()
+	
+	for i, voc := range pageVoc.vocItems {
+		secondaryText := ""
+		if showTranslations {
+			secondaryText = voc.secondaryText
+		}
+		
+		pageVoc.lVoc.AddItem(voc.primaryText, secondaryText, voc.shortcut, func() {})
+		pageVoc.mPosTrans[i] = voc.secondaryText
+		// mPosItems remains the same
+	}
 }
