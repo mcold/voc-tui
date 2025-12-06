@@ -17,7 +17,7 @@ func (pageMain *pageMainType) build() {
 	connectDB()
 	pageMain.Pages = tview.NewPages()
 
-	pageMain.Pages.SetBackgroundColor(tcell.ColorBlue)
+	pageMain.Pages.SetBackgroundColor(tcell.ColorBlack)
 
 	pageVoc.build()
 	pageVoc.show()
@@ -25,7 +25,7 @@ func (pageMain *pageMainType) build() {
 	pageMain.Flex = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(pageMain.Pages, 0, 1, true)
 
-	pageMain.Flex.SetBackgroundColor(tcell.ColorBlue)
+	pageMain.Flex.SetBackgroundColor(tcell.ColorBlack)
 
 	app.SetFocus(pageVoc.lVoc)
 

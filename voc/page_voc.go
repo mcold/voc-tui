@@ -51,7 +51,7 @@ func (pageVoc *pageVocType) build() {
 
 	pageVoc.lVoc = tview.NewList()
 	pageVoc.lVoc.SetBorderPadding(2, 2, 2, 2).
-		SetBorderColor(tcell.ColorBlue)
+		SetBorderColor(tcell.ColorBlack)
 
 	pageVoc.lVoc.SetSelectedFunc(func(pos int, _ string, _ string, _ rune) {
 		pageVoc.vTrans.SetText(pageVoc.mPosTrans[pos])
@@ -60,11 +60,11 @@ func (pageVoc *pageVocType) build() {
 
 	pageVoc.vTrans = tview.NewTextView()
 	pageVoc.vTrans.SetBorderPadding(1, 1, 1, 1).
-		SetBorderColor(tcell.ColorBlue)
+		SetBorderColor(tcell.ColorBlack)
 
 	pageVoc.vLink = tview.NewTextView()
 	pageVoc.vLink.SetBorderPadding(1, 1, 1, 1).
-		SetBorderColor(tcell.ColorBlue)
+		SetBorderColor(tcell.ColorBlack)
 
 	pageVoc.fTrans = tview.NewFlex()
 	pageVoc.fTrans.SetBorderPadding(1, 1, 1, 1)
@@ -73,14 +73,14 @@ func (pageVoc *pageVocType) build() {
 
 	pageVoc.fTrans.AddItem(pageVoc.vTrans, 0, 8, true).
 		//AddItem(pageVoc.vLink, 0, 1, false).
-		SetBorderColor(tcell.ColorBlue)
+		SetBorderColor(tcell.ColorBlack)
 
 	pageVoc.Flex = tview.NewFlex()
 	pageVoc.Flex.SetBorderPadding(2, 2, 2, 2)
 
 	pageVoc.Flex.AddItem(pageVoc.lVoc, 0, 3, true).
 		AddItem(pageVoc.fTrans, 0, 8, false).
-		SetBorderColor(tcell.ColorBlue)
+		SetBorderColor(tcell.ColorBlack)
 
 	pageVoc.Flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == '`' && event.Modifiers() == tcell.ModAlt {
@@ -175,7 +175,7 @@ func setVoc() {
 		pageVoc.lVoc.AddItem(strings.ToLower(text.String), trans, displayRune, func() {})
 		pageVoc.mPosTrans[posNum] = comment.String
 		pageVoc.mPosItems[posNum] = itemType{itemKey: itemKey.String, pageNum: int(pageNum.Int64), attachKey: attachKey.String}
-		
+
 		// Store voc item for translation toggle functionality
 		pageVoc.vocItems = append(pageVoc.vocItems, vocItem{
 			primaryText:   strings.ToLower(text.String),
@@ -211,7 +211,7 @@ func OpenLinkInBrowser(url string) error {
 func (pageVoc *pageVocType) toggleTranslations() {
 	// Toggle the state
 	pageVoc.showTranslations = !pageVoc.showTranslations
-	
+
 	// Refresh the list with new translation state
 	pageVoc.refreshVocList(pageVoc.showTranslations)
 }
@@ -219,13 +219,13 @@ func (pageVoc *pageVocType) toggleTranslations() {
 // refreshVocList rebuilds the vocabulary list with current translation state
 func (pageVoc *pageVocType) refreshVocList(showTranslations bool) {
 	pageVoc.lVoc.Clear()
-	
+
 	for i, voc := range pageVoc.vocItems {
 		secondaryText := ""
 		if showTranslations {
 			secondaryText = voc.secondaryText
 		}
-		
+
 		pageVoc.lVoc.AddItem(voc.primaryText, secondaryText, voc.shortcut, func() {})
 		pageVoc.mPosTrans[i] = voc.secondaryText
 		// mPosItems remains the same
