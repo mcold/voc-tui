@@ -6,14 +6,6 @@
 
 The application extracts vocabulary items from annotations in your Zotero database and provides a convenient interface for studying them. Supports multiple languages and various display modes.
 
-## Features
-
-- 📚 **Zotero Integration**: Automatically extracts words from PDF document annotations
-- 🌐 **Multilingual**: Supports ENG, ESP, DEU and other languages
-- 💬 **Configurable Display**: Show/hide translations and comments
-- ⌨️ **Convenient Navigation**: Hotkeys for quick operation
-- 📋 **Quick Actions**: Copy links to clipboard, open in browser
-- 🎨 **Beautiful TUI**: Modern interface based on tview/tcell
 
 ## Installation
 
@@ -43,25 +35,19 @@ The project uses the following libraries:
 ### Basic Launch
 
 ```bash
-# Show words with comments (default)
+# Show words with translations (default)
 ./bin/main.exe ENG
 
-# Hide comments
-./bin/main.exe ENG no_comments
+# Hide translations
+./bin/main.exe ENG no_trans
 ```
-
-### Supported Languages
-
-- `ENG` - English
-- `ESP` - Spanish  
-- `DEU` - German
 
 ### Command Line Arguments
 
 ```
 Usage: voc <lang> [flag]
   lang: Language for word extraction (ENG, ESP, DEU)
-  flag: no_comments (hide comments/translations)
+  flag: no_trans (hide comments/translations)
 ```
 
 ## Hotkeys
@@ -104,24 +90,12 @@ Extracts data from tables:
 - `itemAttachments` - attached files
 - `itemAnnotations` - annotations with text and comments
 
-## Workflow Logic
-
-1. **Database Connection**: Opens Zotero database in user's home folder
-2. **Data Extraction**: Executes SQL query to get annotations by language
-3. **Text Processing**: Splits comments into lines, extracts translations
-4. **Grouping**: Groups words by first letter for quick navigation
-5. **Display**: Shows words in TUI with mode switching capability
-
 ## Configuration
 
 ### Variables
 
 - `showComments` - global variable for controlling comment display
 - Automatically set via command line arguments
-
-### Logging
-
-The application creates an `app.log` file in the working directory for debugging.
 
 ## Development
 
@@ -139,10 +113,6 @@ Main interface components are located in:
 ### Database Operations
 
 SQL queries and Zotero integration logic are located in `zoteroDB.go` and `page_voc.go`.
-
-## License
-
-[Specify project license]
 
 ## Support
 

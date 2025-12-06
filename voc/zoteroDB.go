@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"log"
 	"os"
 	"path/filepath"
 	_ "modernc.org/sqlite"
@@ -20,11 +19,37 @@ func (zoteroDB *zoteroDBType) buildConnectionString() {
 	zoteroDB.ConnectionString = zoteroDB.Path
 }
 
+// GetLanguages returns list of available languages from Zotero database
+func (zoteroDB *zoteroDBType) GetLanguages() ([]string, error) {
+	query := `select distinct upper(ival.value)
+	          from items i
+	          join itemData idat on idat.itemID = i.itemID and idat.fieldID = 7
+	          join itemDataValues ival on ival.valueID = idat.valueID`
+
+	rows, err := zoteroDB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var languages []string
+	for rows.Next() {
+		var language string
+		if err := rows.Scan(&language); err != nil {
+			return nil, err
+		}
+		if language != "" { // Filter out empty values
+			languages = append(languages, language)
+		}
+	}
+
+	return languages, nil
+}
+
 func (zoteroDB *zoteroDBType) Connect() error {
 	// Get user home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Printf("Error getting user home directory: %v", err)
 		return err
 	}
 
@@ -34,13 +59,11 @@ func (zoteroDB *zoteroDBType) Connect() error {
 
 	db, err := sql.Open("sqlite", zoteroDB.ConnectionString)
 	if err != nil {
-		log.Printf("Error opening database at %s: %v", zoteroDB.Path, err)
 		return err
 	}
 
 	err = db.Ping()
 	if err != nil {
-		log.Printf("Error pinging database: %v", err)
 		return err
 	}
 

@@ -3,8 +3,6 @@ package main
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"log"
-	"os"
 )
 
 type applicationType struct {
@@ -14,10 +12,6 @@ type applicationType struct {
 var app *tview.Application
 
 func (application *applicationType) init() {
-	file, err := os.OpenFile("app.log", os.O_TRUNC|os.O_CREATE, 0666)
-	check(err)
-	log.SetOutput(file)
-
 	app = tview.NewApplication()
 
 	application.pages = tview.NewPages()

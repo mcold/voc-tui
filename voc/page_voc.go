@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -23,13 +22,13 @@ type itemType struct {
 }
 
 type pageVocType struct {
-	lVoc             *tview.List
-	vTrans           *tview.TextView
-	vLink            *tview.TextView
-	fTrans           *tview.Flex
-	mPosTrans        map[int]string
-	mPosItems        map[int]itemType
-	vocItems         []vocItem
+	lVoc      *tview.List
+	vTrans    *tview.TextView
+	vLink     *tview.TextView
+	fTrans    *tview.Flex
+	mPosTrans map[int]string
+	mPosItems map[int]itemType
+	vocItems  []vocItem
 	*tview.Flex
 }
 
@@ -103,7 +102,7 @@ func (pageVoc *pageVocType) build() {
 	})
 
 	pageMain.Pages.AddPage("voc", pageVoc.Flex, true, true)
-	
+
 	// Initialize the list with current comment display state
 	pageVoc.refreshVocList(showComments)
 }
@@ -136,10 +135,8 @@ func setVoc() {
 		  join items ipar on ipar.itemID = ian.parentItemID
 		  where ival.value is not null
 		    and ian.type = 5
-			and ival.value = '` + os.Args[1] + `'
+			and ival.value = upper('` + os.Args[1] + `')
 		  order by lower(ian."text")`
-
-	log.Println(query)
 
 	words, err := zoteroDB.Query(query)
 	check(err)
