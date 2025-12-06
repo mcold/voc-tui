@@ -2,7 +2,7 @@
 .idea
 *.tmp
 bin
-src/*.exe*
+voc/*.exe*
 *.exe*
 *.txt
 *.log
